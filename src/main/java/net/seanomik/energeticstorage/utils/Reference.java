@@ -19,5 +19,5 @@ public class Reference {
 
     public static Map<UUID, List<ESSystem>> ES_SYSTEMS = new HashMap<>();
 
-    public static int MAX_DRIVE_TYPES = ConfigFile.getMaxTypes();
+    public static Long MAX_DRIVE_TYPES = Long.valueOf(ConfigFile.getMaxTypes());
 }

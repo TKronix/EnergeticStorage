@@ -50,8 +50,20 @@ public class GUIHelper {
             meta.setDisplayName(ChatColor.RESET + name);
             meta.setLore(lore);
         }
+        meta.setCustomModelData(1001);
         item.setItemMeta(meta);
 
         return item;
+    }
+
+    public static ItemStack createGuiItemStack(ItemStack material, String name)
+    {
+        ItemMeta meta = material.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName(ChatColor.RESET + name);
+        }
+        material.setItemMeta(meta);
+
+        return material;
     }
 }

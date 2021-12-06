@@ -1,6 +1,5 @@
 package net.seanomik.energeticstorage.files;
 
-import com.google.gson.JsonParser;
 import net.seanomik.energeticstorage.EnergeticStorage;
 import net.seanomik.energeticstorage.objects.ESDrive;
 import net.seanomik.energeticstorage.objects.ESSystem;
@@ -119,7 +118,7 @@ public class PlayersFile extends YamlConfiguration {
             if (getConfig().contains(systemPath + "drives")) {
                 for (String driveUUID : getConfig().getConfigurationSection(systemPath + "drives").getKeys(false)) {
 
-                    Map<ItemStack, Integer> items = new HashMap();
+                    Map<ItemStack, Long> items = new HashMap();
                     if (getConfig().contains(systemPath + "drives." + driveUUID + ".items")) {
                         try {
                             JSONParser jsonParser = new JSONParser();
@@ -128,7 +127,7 @@ public class PlayersFile extends YamlConfiguration {
                             for (int i = 0; i < itemJsonArray.size(); i++) {
                                 JSONObject itemObject = (JSONObject) itemJsonArray.get(i);
 
-                                Map.Entry<ItemStack, Integer> item = ItemSerialization.deserializeItem((String) itemObject.get("itemYAML"));
+                                Map.Entry<ItemStack, Long> item = ItemSerialization.deserializeItem((String) itemObject.get("itemYAML"));
 
                                 items.put(item.getKey(), item.getValue());
                             }
@@ -137,7 +136,7 @@ public class PlayersFile extends YamlConfiguration {
                         }
                     }
 
-                    int size = getConfig().getInt(systemPath + "drives." + driveUUID + ".size");
+                    Long size = getConfig().getLong(systemPath + "drives." + driveUUID + ".size");
 
                     drives.add(new ESDrive(size, items));
                 }
@@ -200,7 +199,7 @@ public class PlayersFile extends YamlConfiguration {
             getConfig().set(systemPath + "drives." + drive.getUUID() + ".size", drive.getSize());
 
             JSONArray itemsJson = new JSONArray();
-            for (Map.Entry<ItemStack, Integer> entry : drive.getItems().entrySet()) {
+            for (Map.Entry<ItemStack, Long> entry : drive.getItems().entrySet()) {
                 try {
                     String object = "{\"itemYAML\":\"" + ItemSerialization.serializeItem(entry.getKey(), entry.getValue()).replace("\"", "\\\"") + "\"}";
                     JSONObject itemJSON = (JSONObject) new JSONParser().parse(object);

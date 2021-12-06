@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-
+import org.apache.commons.lang3.math.NumberUtils;
 import java.sql.Ref;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,7 +32,7 @@ public class ESGiveCommand implements TabExecutor {
                 break;
             case 2:
                 if (args[0].equals("drive")) {
-                    tab.addAll(Arrays.asList("1k", "4k", "16k", "64k"));
+                    tab.addAll(Arrays.asList("1k", "4k", "16k", "64k", "256k"));
                 } else if (args[0].equals("system")) {
                     for (Player player : Bukkit.getServer().getOnlinePlayers()) {
                         tab.add(ChatColor.stripColor(player.getDisplayName()));
@@ -45,25 +45,21 @@ public class ESGiveCommand implements TabExecutor {
                         tab.add(ChatColor.stripColor(player.getDisplayName()));
                     }
                 }
-
                 break;
         }
-
         return tab;
     }
-
     private String generateCommandUsage(String[] args) {
         if (args.length > 0) {
             if (args[0].equals("drive")) {
-                return Reference.PREFIX + "Usage: /esgive drive [1k, 4k, 16k, 64k] (player)";
+                return Reference.PREFIX + "Usage: /esgive drive [1-2097151k] (player)";
             }
 
-            return Reference.PREFIX + "Usage: /esgive [drive/system] [1k, 4k, 16k, 64k] (player)";
+            return Reference.PREFIX + "Usage: /esgive [drive/system] [1-2097151k] (player)";
         } else {
-            return Reference.PREFIX + "Usage: /esgive [drive/system] [1k, 4k, 16k, 64k] (player)";
+            return Reference.PREFIX + "Usage: /esgive [drive/system] [1-2097151k] (player)";
         }
     }
-
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!PermissionChecks.canESGive(sender)) {
@@ -71,12 +67,10 @@ public class ESGiveCommand implements TabExecutor {
 
             return true;
         }
-
         if (args.length == 0) {
             sender.sendMessage(generateCommandUsage(args));
             return true;
         }
-
         switch (args[0]) { // Switch on item type
             case "save":
                 PlayersFile.savePlayerSystems(Reference.ES_SYSTEMS.get(((Player) sender).getUniqueId()));
@@ -84,7 +78,6 @@ public class ESGiveCommand implements TabExecutor {
                 break;
             case "system":
                 //Player p = (Player) sender;
-
                 if (args.length == 2) {
                     if (!PermissionChecks.canESGiveOthers(sender)) {
                         sender.sendMessage(Reference.PREFIX + ChatColor.RED + "You don't have permission to give an item to another player!");
@@ -117,8 +110,11 @@ public class ESGiveCommand implements TabExecutor {
                     sender.sendMessage(generateCommandUsage(args));
                     break;
                 }
+                //Drive size
+                if(NumberUtils.isDigits(args[1].replace("k", "")))
+                {
+                    if(Integer.parseInt(args[1].replace("k", "")) > 2097151) {args[1] = "2097151k";}
 
-                if (args[1].equals("1k") || args[1].equals("4k") || args[1].equals("16k") || args[1].equals("64k")) {
                     int size = Integer.parseInt(args[1].replace("k", "")) * 1024;
 
                     if (args.length == 3) {
@@ -130,7 +126,7 @@ public class ESGiveCommand implements TabExecutor {
 
                         Player player = Bukkit.getPlayer(args[2]);
                         if (player != null) {
-                            player.getInventory().addItem(ItemConstructor.createDrive(size, 0, 0));
+                            player.getInventory().addItem(ItemConstructor.createDrive((long) size, 0L, 0L));
 
                             sender.sendMessage(Reference.PREFIX + ChatColor.GREEN + "Gave an ES Drive to " + player.getDisplayName());
                         } else {
@@ -139,7 +135,7 @@ public class ESGiveCommand implements TabExecutor {
                     } else {
                         if (sender instanceof Player) {
                             Player player = (Player) sender;
-                            player.getInventory().addItem(ItemConstructor.createDrive(size, 0, 0));
+                            player.getInventory().addItem(ItemConstructor.createDrive((long) size, 0L, 0L));
 
                             sender.sendMessage(Reference.PREFIX + ChatColor.GREEN + "Gave an ES Drive to " + player.getDisplayName());
                         } else {
@@ -150,10 +146,8 @@ public class ESGiveCommand implements TabExecutor {
                 } else {
                     sender.sendMessage(generateCommandUsage(args));
                 }
-
                 break;
         }
-
         return true;
     }
 }

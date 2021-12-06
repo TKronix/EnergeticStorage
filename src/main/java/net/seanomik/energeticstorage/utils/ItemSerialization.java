@@ -8,7 +8,7 @@ import java.util.AbstractMap;
 import java.util.Map;
 
 public class ItemSerialization {
-    public static String serializeItem(ItemStack item, int amount) {
+    public static String serializeItem(ItemStack item, Long amount) {
         YamlConfiguration yaml = new YamlConfiguration();
 
         yaml.set("amount", amount);
@@ -17,14 +17,14 @@ public class ItemSerialization {
         return yaml.saveToString();
     }
 
-    public static Map.Entry<ItemStack, Integer> deserializeItem(String item) throws InvalidConfigurationException {
+    public static Map.Entry<ItemStack, Long> deserializeItem(String item) throws InvalidConfigurationException {
         YamlConfiguration yaml = new YamlConfiguration();
         yaml.loadFromString(item);
 
         ItemStack itemStack = yaml.getItemStack("item");
-        int amount = yaml.getInt("amount");
+        Long amount = yaml.getLong("amount");
 
-        Map.Entry<ItemStack, Integer> itemEntry = new AbstractMap.SimpleEntry<>(itemStack, amount);
+        Map.Entry<ItemStack, Long> itemEntry = new AbstractMap.SimpleEntry<>(itemStack, amount);
 
         return itemEntry;
     }

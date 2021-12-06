@@ -24,20 +24,20 @@ import java.util.*;
 
 public class ESDrive implements Cloneable, ConfigurationSerializable {
     private UUID uuid;
-    private int size;
-    private Map<ItemStack, Integer> items = new HashMap<>(); // Item, amount
+    private Long size;
+    private Map<ItemStack, Long> items = new HashMap<>(); // Item, amount
 
-    public ESDrive(int size) {
+    public ESDrive(Long size) {
         this.size = size;
     }
 
-    protected ESDrive(UUID uuid, int size, Map<ItemStack, Integer> items) {
+    protected ESDrive(UUID uuid, Long size, Map<ItemStack, Long> items) {
         this.uuid = uuid;
         this.size = size;
         this.items = items;
     }
 
-    public ESDrive(int size, Map<ItemStack, Integer> items) {
+    public ESDrive(Long size, Map<ItemStack, Long> items) {
         this(size);
         uuid = UUID.randomUUID();
 
@@ -55,7 +55,7 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
                 for (int i = 0; i < itemJsonArray.size(); i++) {
                     JSONObject itemObject = (JSONObject) itemJsonArray.get(i);
 
-                    Map.Entry<ItemStack, Integer> item = ItemSerialization.deserializeItem((String) itemObject.get("itemYAML"));
+                    Map.Entry<ItemStack, Long> item = ItemSerialization.deserializeItem((String) itemObject.get("itemYAML"));
 
                     items.put(item.getKey(), item.getValue());
                 }
@@ -64,7 +64,7 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
             }
         }
 
-        size = driveNBT.getInteger("ES_DriveMaxItemAmount");
+        size = driveNBT.getLong("ES_DriveMaxItemAmount");
         uuid = (driveNBT.hasKey("ES_DriveUUID")) ? UUID.fromString(driveNBT.getString("ES_DriveUUID")) : UUID.randomUUID();
     }
 
@@ -72,21 +72,21 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
         return uuid;
     }
 
-    public int getSize() {
+    public Long getSize() {
         return size;
     }
 
-    public int getFilledSpace() {
-        int filled = 0;
+    public Long getFilledSpace() {
+        Long filled = Long.valueOf(0);
 
-        for (int amount : items.values()) {
+        for (Long amount : items.values()) {
             filled += amount;
         }
 
         return filled;
     }
 
-    public int getFilledTypes() {
+    public Long getFilledTypes() {
         List<Material> foundItems = new ArrayList<>();
 
         for (ItemStack item : items.keySet()) {
@@ -95,20 +95,20 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
             }
         }
 
-        return foundItems.size();
+        return Long.valueOf(foundItems.size());
     }
 
-    public Map<ItemStack, Integer> getItems() { return items; }
+    public Map<ItemStack, Long> getItems() { return items; }
 
     public void setUUID(UUID uuid) {
         this.uuid = uuid;
     }
 
-    public void setSize(int size) {
+    public void setSize(Long size) {
         this.size = size;
     }
 
-    public void setItems(Map<ItemStack, Integer> items) { this.items = items; }
+    public void setItems(Map<ItemStack, Long> items) { this.items = items; }
 
     public ESDrive clone() {
         try {
@@ -147,11 +147,11 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
         if (canAddItem(item)) {
             // The item is contained, then update the amount.
             if (Utils.containsSimilarItem(new ArrayList<>(items.keySet()), item, true)) {
-                int amount = (int) items.values().toArray()[Utils.indexOfSimilarItem(new ArrayList<>(items.keySet()), item)] + item.getAmount();
+                Long amount = (Long) items.values().toArray()[Utils.indexOfSimilarItem(new ArrayList<>(items.keySet()), item)] + item.getAmount();
                 items = Utils.removeSimilarItem(items, item);
                 items.put(item, amount);
             } else {
-                items.put(item, item.getAmount());
+                items.put(item, (long) item.getAmount());
             }
 
             return true;
@@ -162,12 +162,12 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
     
     public ItemStack removeItem(ItemStack item) {
         // If there isn't enough items stored to take out the requested amount, then just take out all that we can.
-        int foundItemAmount = (int) items.values().toArray()[Utils.indexOfSimilarItem(new ArrayList<>(items.keySet()), item)];
+        Long foundItemAmount = (Long) items.values().toArray()[Utils.indexOfSimilarItem(new ArrayList<>(items.keySet()), item)];
         if (foundItemAmount - item.getAmount() < 1) {
             items = Utils.removeSimilarItem(items, item);
-            item.setAmount(foundItemAmount);
+            item.setAmount(Math.toIntExact(foundItemAmount));
         } else {
-            int newAmount = foundItemAmount - item.getAmount();
+            Long newAmount = foundItemAmount - item.getAmount();
 
             items = Utils.removeSimilarItem(items, item);
             items.put(item, newAmount);
@@ -186,7 +186,7 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
             NBTItem driveNBT = new NBTItem(drive);
 
             JSONArray itemsJson = new JSONArray();
-            for (Map.Entry<ItemStack, Integer> entry : items.entrySet()) {
+            for (Map.Entry<ItemStack, Long> entry : items.entrySet()) {
                 try {
                     String object = "{\"itemYAML\":\"" + StringEscapeUtils.escapeJson(ItemSerialization.serializeItem(entry.getKey(), entry.getValue())) + "\"}";
                     JSONObject itemJSON = (JSONObject) new JSONParser().parse(object);
@@ -218,7 +218,7 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
 
         if (!items.isEmpty()) {
             List<Object> itemsSerialized = new ArrayList<>();
-            for (Map.Entry<ItemStack, Integer> entry : items.entrySet()) {
+            for (Map.Entry<ItemStack, Long> entry : items.entrySet()) {
                 Map<String, Object> itemSerialized = new LinkedHashMap<>();
                 itemSerialized.put("amount", entry.getValue());
                 itemSerialized.put("item", entry.getKey().serialize());
@@ -234,15 +234,15 @@ public class ESDrive implements Cloneable, ConfigurationSerializable {
     @NotNull
     public static ESDrive deserialize(@NotNull Map<String, Object> args) {
         UUID uuid = (UUID) args.get("uuid");
-        int size = ((Number)args.get("size")).intValue();
-        Map<ItemStack, Integer> items = new HashMap<>();
+        Long size = ((Number)args.get("size")).longValue();
+        Map<ItemStack, Long> items = new HashMap<>();
 
         if (args.containsKey("items")) {
             Object raw = args.get("items");
             if (raw instanceof Map) {
                 Map<?, ?> map = (Map)raw;
 
-                items.put(ItemStack.deserialize((Map<String, Object>) map.get("item")), ((Number)map.get("amount")).intValue());
+                items.put(ItemStack.deserialize((Map<String, Object>) map.get("item")), ((Number)map.get("amount")).longValue());
             }
         }
 

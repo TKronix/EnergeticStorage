@@ -1,6 +1,7 @@
 package net.seanomik.energeticstorage.gui;
 
 import net.seanomik.energeticstorage.EnergeticStorage;
+import net.seanomik.energeticstorage.Skulls;
 import net.seanomik.energeticstorage.files.PlayersFile;
 import net.seanomik.energeticstorage.objects.ESDrive;
 import net.seanomik.energeticstorage.objects.ESSystem;
@@ -31,14 +32,15 @@ import java.util.Map;
 import java.util.UUID;
 
 import static net.seanomik.energeticstorage.utils.GUIHelper.createGuiItem;
+import static net.seanomik.energeticstorage.utils.GUIHelper.createGuiItemStack;
 
 public class ESTerminalGUI implements InventoryHolder, Listener {
     private final Inventory globalInv;
-    private final String title = "ES Terminal";
+    private final String title = "Terminal";
 
     private Map<UUID, ESSystem> openSystems = new HashMap<>();
-    private Map<UUID, Integer> openPages = new HashMap<>();
-    private Map<UUID, Map<ItemStack, Integer>> openSearches = new HashMap<>();
+    private Map<UUID, Long> openPages = new HashMap<>();
+    private Map<UUID, Map<ItemStack, Long>> openSearches = new HashMap<>();
 
     public ESTerminalGUI() {
         globalInv = Bukkit.createInventory(this, 9*6, title);
@@ -77,12 +79,12 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
         inv.setItem(9, createGuiItem(Material.LIME_STAINED_GLASS_PANE, "To insert items, put them above."));
 
         inv.setItem(49, createGuiItem(Material.COMPASS, "Search Items"));
-        inv.setItem(48, createGuiItem(Material.PAPER, "Last page"));
-        inv.setItem(50, createGuiItem(Material.PAPER, "Next page"));
+        inv.setItem(48, createGuiItemStack(Skulls.LeftArrow.getItemStack(), "Last page"));
+        inv.setItem(50, createGuiItemStack(Skulls.RightArrow.getItemStack(), "Next page"));
 
         // Store the current player page if it hasn't been stored already.
         // If the page has been saved, then get it.
-        int pageIndex = 0;
+        Long pageIndex = 0L;
         if (!openPages.containsKey(player.getUniqueId())) {
             openPages.put(player.getUniqueId(), pageIndex);
         } else {
@@ -90,7 +92,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
         }
 
         // Fill items with the searching items if there is a search
-        Map<ItemStack, Integer> items = openSystem.getAllItems();
+        Map<ItemStack, Long> items = openSystem.getAllItems();
         if (openSearches.containsKey(player.getUniqueId())) {
             items = openSearches.get(player.getUniqueId());
         }
@@ -119,7 +121,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
 
                 break;
             case AMOUNT:
-                Map<ItemStack, Integer> finalItems = items;
+                Map<ItemStack, Long> finalItems = items;
                 sortedKeys.sort((i1, i2) -> {
                     return finalItems.get(i2).compareTo(finalItems.get(i1));
                 });
@@ -140,11 +142,11 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
 
             // Fill the box if an item can go there, else just empty it.
             if (i - (10 + lineIndex * 9) <= 6) { // Each line is 9 boxes.
-                int itemIndex = i - (10 + lineIndex * 2) + pageIndex * 28; // The start of a new line is + 2 boxes, with each page showing 28 items.
+                Long itemIndex = (i - (10 + lineIndex * 2) + pageIndex * 28); // The start of a new line is + 2 boxes, with each page showing 28 items.
                 if (itemIndex < items.size()) {
                     try {
-                        ItemStack item = sortedKeys.get(itemIndex);
-                        int amount = items.get(item);
+                        ItemStack item = sortedKeys.get(Math.toIntExact(itemIndex));
+                        Long amount = items.get(item);
 
                         ItemMeta itemMeta = item.getItemMeta();
                         if (itemMeta.hasLore()) {
@@ -160,7 +162,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
                         }
                         item.setItemMeta(itemMeta);
 
-                        item.setAmount(Math.min(amount, 64));
+                        item.setAmount((int) Math.min(amount, 64));
 
                         inv.setItem(i, item);
                     } catch (NullPointerException e) {
@@ -177,9 +179,9 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
             inv.setItem(45, createGuiItem(Material.IRON_BARS, "Security"));
 
             // Create the lore for the drives
-            int maxSpace = 0;
-            int filledSpace = 0;
-            int filledTypes = 0;
+            Long maxSpace = 0L;
+            Long filledSpace = 0L;
+            Long filledTypes = 0L;
             for (ESDrive drive : openSystem.getESDrives()) {
                 maxSpace += drive.getSize();
                 filledSpace += drive.getFilledSpace();
@@ -195,7 +197,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
             }
 
             // Max drive type count for each drive
-            int maxTypes = openSystem.getESDrives().size() * Reference.MAX_DRIVE_TYPES;
+            Long maxTypes = openSystem.getESDrives().size() * Reference.MAX_DRIVE_TYPES;
 
             // Get color of types text
             ChatColor itemsColor = ChatColor.GREEN;
@@ -208,7 +210,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
             List<String> lore = new ArrayList<>();
             lore.add(ChatColor.BLUE + "Filled Items: " + spaceColor + filledSpace + ChatColor.BLUE + "/" + ChatColor.GREEN + maxSpace);
             lore.add(ChatColor.BLUE + "Filled Types: " + itemsColor + filledTypes + ChatColor.BLUE + "/" + ChatColor.GREEN + maxTypes);
-            inv.setItem(46, createGuiItem(Material.CHEST, "Drives", lore));
+            inv.setItem(46, createGuiItem(Material.BLUE_DYE, "Drives", lore));
 
             inv.setItem(47, createGuiItem(Material.HOPPER, "Sort by " + openSystem.getSortOrder().toDisplayString()));
         }
@@ -303,7 +305,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
             // Make sure no items will get copied to other players open inventory
             Inventory inv = player.getOpenInventory().getTopInventory();
 
-            int pageIndex = openPages.get(player.getUniqueId());
+            Long pageIndex = openPages.get(player.getUniqueId());
             if (slot == 48) { // Back page
                 if (pageIndex != 0) {
                     pageIndex--;
@@ -315,12 +317,12 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
                 new AnvilGUI.Builder()
                         .onComplete((plr, text) -> {
                             if (text != null && !text.isEmpty()) {
-                                Map<ItemStack, Integer> items = openSystem.getAllItems();
-                                Map<ItemStack, Integer> search = new HashMap<>();
-                                for (Map.Entry<ItemStack, Integer> entry : items.entrySet()) {
+                                Map<ItemStack, Long> items = openSystem.getAllItems();
+                                Map<ItemStack, Long> search = new HashMap<>();
+                                for (Map.Entry<ItemStack, Long> entry : items.entrySet()) {
                                     ItemStack item = entry.getKey();
                                     ItemMeta itemMeta = item.getItemMeta();
-                                    int amount = entry.getValue();
+                                    Long amount = entry.getValue();
 
                                     text = text.toLowerCase();
                                     List<String> lore = itemMeta.getLore();
@@ -350,7 +352,7 @@ public class ESTerminalGUI implements InventoryHolder, Listener {
                         .plugin(EnergeticStorage.getPlugin())
                         .open(player);
             } else if (slot == 50) { // Next page
-                Map<ItemStack, Integer> items = openSystem.getAllItems();
+                Map<ItemStack, Long> items = openSystem.getAllItems();
 
                 if (items.size() > (pageIndex + 1) * 28 ) {
                     pageIndex++;

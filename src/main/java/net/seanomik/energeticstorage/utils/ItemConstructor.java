@@ -3,6 +3,8 @@ package net.seanomik.energeticstorage.utils;
 import de.tr7zw.changeme.nbtapi.NBTItem;
 import de.tr7zw.changeme.nbtapi.NBTTileEntity;
 import net.seanomik.energeticstorage.Skulls;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -31,45 +33,48 @@ public class ItemConstructor {
         return systemBlock;
     }
 
-    public static ItemStack createDrive(int size, int filledItems, int filledTypes) {
-        int smallSize = size / 1024;
-        if (smallSize != 1 && smallSize != 4 && smallSize != 16 && smallSize != 64) {
-            return null;
+    public static ItemStack createDrive(Long size, Long filledItems, Long filledTypes) {
+        Long smallSize;
+        if(size > 2147482624L)
+        {
+            size = Long.valueOf(2147482624);
+            //if (smallSize != 1 && smallSize != 4 && smallSize != 16 && smallSize != 64 && smallSize != 256) {return null;}
         }
-
-        // Get the size string for the items name.
-        String sizeString = size + "k";
-        sizeString = sizeString.substring(0, sizeString.indexOf('k') - 3);
-        if (sizeString.equals("65")) sizeString = "64";
-
+        smallSize = size / Long.valueOf(1024);
         ItemStack drive = new ItemStack(DRIVE_MATERIAL, 1);
 
         // Save the items data in NBT
         NBTItem driveNBT = new NBTItem(drive);
         driveNBT.setBoolean("ES_Drive", true);
-        driveNBT.setInteger("ES_DriveMaxItemAmount", size);
-        driveNBT.setInteger("ES_DriveMaxTypeAmount", Reference.MAX_DRIVE_TYPES);
+        driveNBT.setLong("ES_DriveMaxItemAmount", size);
+        driveNBT.setLong("ES_DriveMaxTypeAmount", Reference.MAX_DRIVE_TYPES);
         driveNBT.setString("ES_DriveUUID", UUID.randomUUID().toString());
         drive = driveNBT.getItem();
 
         ItemMeta driveMeta = drive.getItemMeta();
-
-        driveMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "ES " + sizeString + "k Drive");
+        driveMeta.setDisplayName(ChatColor.LIGHT_PURPLE + "ES " + smallSize + "k Drive");
 
         // Get color of items text
         ChatColor itemsColor = ChatColor.GREEN;
-        if (filledItems >= size * 0.8) {
+        if (filledItems >= size) {
             itemsColor = ChatColor.RED;
-        } else if (filledItems >= size * 0.5) {
+        } else if (filledItems >= size * 0.8) {
             itemsColor = ChatColor.YELLOW;
         }
 
         // Get color of types text
         ChatColor typesColor = ChatColor.GREEN;
-        if (filledTypes >= Reference.MAX_DRIVE_TYPES * 0.8) {
+        if (filledTypes >= Reference.MAX_DRIVE_TYPES) {
             typesColor = ChatColor.RED;
-        } else if (filledTypes >= Reference.MAX_DRIVE_TYPES * 0.5) {
+        } else if (filledTypes >= Reference.MAX_DRIVE_TYPES * 0.8) {
             typesColor = ChatColor.YELLOW;
+        }
+        // Handles Custom model changes based of how filled. Just like in the modded version of a computer storage system
+        driveMeta.setCustomModelData(1001);
+        if(filledItems >= size * 0.8 || filledTypes >= Reference.MAX_DRIVE_TYPES * 0.8) {
+            driveMeta.setCustomModelData(1002);
+        }else if(filledItems >= size || filledTypes >= Reference.MAX_DRIVE_TYPES) {
+            driveMeta.setCustomModelData(1003);
         }
 
         List<String> lore = new ArrayList<>();
@@ -80,5 +85,14 @@ public class ItemConstructor {
         drive.setItemMeta(driveMeta);
 
         return drive;
+    }
+    public static ItemStack CreateCustomItem(Material Item, String Name, int CustomModelData)
+    {
+        ItemStack CustomItem = new ItemStack(Item, 1);
+        ItemMeta CustomitemMeta = CustomItem.getItemMeta();
+        CustomitemMeta.setDisplayName(Name);
+        CustomitemMeta.setCustomModelData(CustomModelData);
+        CustomItem.setItemMeta(CustomitemMeta);
+        return CustomItem;
     }
 }

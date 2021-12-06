@@ -118,7 +118,7 @@ public class HopperTask extends BukkitRunnable {
                                 }
                             } catch (ClassCastException exception) {
                                 // Ignore exception. These exceptions are only thrown in rare occasions
-                                // that the hopper is destroyed during during this task.
+                                // that the hopper is destroyed during this task.
                             }
                         });
                     }
