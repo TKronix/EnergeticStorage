@@ -33,7 +33,6 @@ public class HopperTask extends BukkitRunnable {
             case NORTH:
                 return hopperFacing == BlockFace.SOUTH;
         }
-
         return false;
     }
 
@@ -110,10 +109,10 @@ public class HopperTask extends BukkitRunnable {
                                     if (firstItem != null) {
                                         ItemStack clonedItem = firstItem.clone();
                                         clonedItem.setAmount(1);
-
-                                        firstItem.setAmount(firstItem.getAmount() - 1);
-
-                                        system.addItem(clonedItem);
+                                        if(system.addItem(clonedItem))
+                                        {
+                                            firstItem.setAmount(firstItem.getAmount() - 1);
+                                        }
                                     }
                                 }
                             } catch (ClassCastException exception) {
