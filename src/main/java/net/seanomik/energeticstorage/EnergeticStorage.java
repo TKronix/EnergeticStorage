@@ -77,6 +77,12 @@ public final class EnergeticStorage extends JavaPlugin implements Listener {
         savePlayerSystems();
     }
 
+    @EventHandler
+    public void onPlayerJoin()
+    {
+
+    }
+
     @Override
     public void onDisable() {
         // Plugin shutdown logic

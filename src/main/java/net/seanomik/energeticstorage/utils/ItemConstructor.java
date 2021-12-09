@@ -6,6 +6,7 @@ import net.seanomik.energeticstorage.Skulls;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -86,11 +87,11 @@ public class ItemConstructor {
 
         return drive;
     }
-    public static ItemStack CreateCustomItem(Material Item, String Name, int CustomModelData)
+    public static ItemStack CreateCustomItem(Material Item, ChatColor TextColor, String Name,int Quantity, int CustomModelData)
     {
-        ItemStack CustomItem = new ItemStack(Item, 1);
+        ItemStack CustomItem = new ItemStack(Item, Quantity);
         ItemMeta CustomitemMeta = CustomItem.getItemMeta();
-        CustomitemMeta.setDisplayName(Name);
+        CustomitemMeta.setDisplayName(TextColor+Name);
         CustomitemMeta.setCustomModelData(CustomModelData);
         CustomItem.setItemMeta(CustomitemMeta);
         return CustomItem;
